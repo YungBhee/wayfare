@@ -271,6 +271,26 @@ the set has grown, and `checks.Runner.Default()` returns:
 stellar.toml against the preceding stored observation. With no usable prior
 observation, it is undetermined rather than passing without evidence.
 
+### Checks run per rung
+
+| Check | Scope | Cost | Severity |
+|:---|:---|:---|:---|
+| `hop.issuer-verified` | corridor | free | warning |
+
+`hop.issuer-verified` is deliberately not in `Runner.Default()`. It needs the
+intermediate assets of one rung's best path, and the default sweep has no
+per-rung hop set to give it. `route.LadderResult.summarise` runs it per priced
+rung against `Quote.Hops` and attaches the result to `Rung.Findings` (wire:
+`rungs[].findings`) only when it does not pass.
+
+It reports each intermediate asset whose issuer is absent from the verified
+registry. Native XLM is skipped because it has no issuer; an issued hop whose
+issuing account was not established is reported rather than skipped, because
+no established identity is not a verified one. Registration is not a safety
+rating: the check observes membership in a local list and says nothing about
+whether an unregistered issuer is honest or will exercise freeze or clawback.
+Like every check, it never changes the verdict or integrity.
+
 **Writing one.** [docs/adding-a-check.md](adding-a-check.md) walks the whole
 path for a new check — ID, scope, subject fields, evidence, the tests CI runs,
 and the line in `Runner.Default()` that makes it reach a reader.
